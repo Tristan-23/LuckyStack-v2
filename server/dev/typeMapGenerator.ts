@@ -7,6 +7,7 @@ import { extractAuth, extractHttpMethod, extractRateLimit, HttpMethod } from './
 import { buildTypeMapArtifacts, writeTypeMapArtifacts } from './typeMap/emitterArtifacts';
 import { getInputTypeFromFile, getOutputTypeFromFile, getSyncClientDataType, getSyncClientOutputType, getSyncServerOutputType, stripComments } from './typeMap/extractors';
 import { generateServerFunctions } from './typeMap/functionsMeta';
+import { SRC_DIR } from '../utils/paths';
 
 /**
  * Frontend Type Map Generator
@@ -14,8 +15,6 @@ import { generateServerFunctions } from './typeMap/functionsMeta';
  * Generates a complete type map for all API endpoints, enabling
  * type-safe apiRequest calls on the frontend.
  */
-
-const SRC_DIR = path.join(process.cwd(), 'src');
 
 // Global set to collect required imports across all files
 const namedImports = new Map<string, Set<string>>();

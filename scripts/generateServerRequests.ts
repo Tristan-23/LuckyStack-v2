@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getInputTypeFromFile, getSyncClientDataType } from '../server/dev/typeMap/extractors';
+import { resolveFromRoot } from '../server/utils/paths';
 
 const normalizePath = (p: string) => p.split(path.sep).join("/");
 const API_VERSION_REGEX = /_v(\d+)$/;
@@ -55,8 +56,8 @@ const apiImports: string[] = [];
 const syncImports: string[] = [];
 const functionImports: string[] = [];
 
-let apiMap = "export const apis: Record<string, { auth: any, main: any, rateLimit?: number | false, httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE', inputType?: string }> = {\n";
-let syncMap = "export const syncs: Record<string, { main: any, auth: Record<string, any>, inputType?: string }> | any = {\n";
+let apiMap = "export const apis: Record<string, { auth: any, main: any, rateLimit?: number | false, httpMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE', inputType?: string, inputTypeFilePath?: string }> = {\n";
+let syncMap = "export const syncs: Record<string, { main: any, auth: Record<string, any>, inputType?: string, inputTypeFilePath?: string }> | any = {\n";
 let functionsMap = "export const functions: Record<string, any> = {\n";
 
 let apiCount = 0;
@@ -87,7 +88,7 @@ rawSrcFiles.forEach((normalized) => {
     const apiName = apiNameWithVersion.replace(API_VERSION_REGEX, '');
     const routeKey = pagePath ? `api/${pagePath}/${apiName}/${version}` : `api/${apiName}/${version}`;
 
-    apiMap += `  "${routeKey}": {\n    auth: "auth" in ${varName} ? ${varName}.auth : {},\n    main: ${varName}.main,\n    rateLimit: "rateLimit" in ${varName} ? (${varName}.rateLimit as number | false | undefined) : undefined,\n    httpMethod: "httpMethod" in ${varName} ? (${varName}.httpMethod as 'GET' | 'POST' | 'PUT' | 'DELETE' | undefined) : undefined,\n    inputType: ${JSON.stringify(getInputTypeFromFile(normalized))},\n  },\n`;
+    apiMap += `  "${routeKey}": {\n    auth: "auth" in ${varName} ? ${varName}.auth : {},\n    main: ${varName}.main,\n    rateLimit: "rateLimit" in ${varName} ? (${varName}.rateLimit as number | false | undefined) : undefined,\n    httpMethod: "httpMethod" in ${varName} ? (${varName}.httpMethod as 'GET' | 'POST' | 'PUT' | 'DELETE' | undefined) : undefined,\n    inputType: ${JSON.stringify(getInputTypeFromFile(normalized))},\n    inputTypeFilePath: ${JSON.stringify(normalized)},\n  },\n`;
   }
 
   // Sync
@@ -115,7 +116,7 @@ rawSrcFiles.forEach((normalized) => {
       const varName = `syncServer${syncCount++}`;
       syncImports.push(`import * as ${varName} from '${importPath}';`);
       const inputType = getSyncClientDataType(normalized);
-      syncMap += `  "${routeKey}_server": { auth: "auth" in ${varName} ? ${varName}.auth : {}, main: ${varName}.main, inputType: ${JSON.stringify(inputType)} },\n`;
+      syncMap += `  "${routeKey}_server": { auth: "auth" in ${varName} ? ${varName}.auth : {}, main: ${varName}.main, inputType: ${JSON.stringify(inputType)}, inputTypeFilePath: ${JSON.stringify(normalized)} },\n`;
     }
   }
 });
@@ -156,5 +157,5 @@ const importStatements = [
 
 const output = `${importStatements}\n\n${apiMap}\n${syncMap}\n${functionsMap}`;
 
-fs.writeFileSync("./server/prod/generatedApis.ts", output);
+fs.writeFileSync(resolveFromRoot('server', 'prod', 'generatedApis.ts'), output);
 console.log("✅ server/prod/generatedApis.ts created");

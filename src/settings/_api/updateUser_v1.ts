@@ -2,6 +2,7 @@ import { AuthProps, SessionLayout } from '../../../config';
 import { Functions, ApiResponse } from '../../../src/_sockets/apiTypes.generated';
 import sharp from 'sharp';
 import path from 'path';
+import { UPLOADS_DIR } from '../../../server/utils/paths';
 
 export const rateLimit: number | false = 20;
 export const httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'POST';
@@ -33,7 +34,7 @@ export const main = async ({ data, user, functions }: ApiParams): Promise<ApiRes
       const buffer = Buffer.from(base64Data, "base64");
 
       const fileName = `${user.id}.webp`;
-      const filePath = path.join(process.cwd(), "uploads", fileName);
+      const filePath = path.join(UPLOADS_DIR, fileName);
 
       try {
         await sharp(buffer)

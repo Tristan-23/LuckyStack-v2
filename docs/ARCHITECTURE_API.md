@@ -217,6 +217,8 @@ export const rateLimit = false; // Disable for this API
 | ---- | -------- | ------- |
 | `server/sockets/handleApiRequest.ts` | `default export` | Handles websocket API requests (`apiRequest`), validates auth/rate-limit, executes API module, emits response. |
 | `server/sockets/handleHttpApiRequest.ts` | `handleHttpApiRequest` | Handles HTTP API calls (`/api/...`) with shared auth/validation/error-normalization behavior. |
+| `server/utils/runtimeTypeValidation.ts` | `validateInputByType` | Validates request payloads against extracted runtime input types with path-level error messages. |
+| `server/utils/runtimeTypeResolver.ts` | `resolveRuntimeTypeText` | Resolves local/imported/re-exported type aliases and expands utility wrappers (`Partial`, `Required`, `Pick`, `Omit`, `Record`) before validation. |
 | `server/utils/responseNormalizer.ts` | `normalizeErrorResponse` | Normalizes `errorCode/errorParams` into localized error responses. |
 | `server/utils/rateLimiter.ts` | `checkRateLimit` | Applies configured rate-limit windows and limits. |
 | `src/_sockets/apiRequest.ts` | `apiRequest` | Typed client request API with queueing and abort-controller support. |

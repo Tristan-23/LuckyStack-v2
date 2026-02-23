@@ -12,6 +12,7 @@ import {
   defaultHttpStatusForResponse,
   normalizeErrorResponseCore,
 } from '../../shared/responseNormalizer';
+import { SRC_DIR } from './paths';
 
 type LanguageCode = 'nl' | 'en' | 'de' | 'fr';
 type TranslationRecord = Record<string, string | Record<string, unknown>>;
@@ -24,10 +25,10 @@ let translationsByLanguage: Record<LanguageCode, TranslationRecord> = {
 };
 
 const localePaths: Record<LanguageCode, string> = {
-  nl: path.resolve('./src/_locales/nl.json'),
-  en: path.resolve('./src/_locales/en.json'),
-  de: path.resolve('./src/_locales/de.json'),
-  fr: path.resolve('./src/_locales/fr.json'),
+  nl: path.join(SRC_DIR, '_locales', 'nl.json'),
+  en: path.join(SRC_DIR, '_locales', 'en.json'),
+  de: path.join(SRC_DIR, '_locales', 'de.json'),
+  fr: path.join(SRC_DIR, '_locales', 'fr.json'),
 };
 
 export const reloadLocaleTranslations = () => {

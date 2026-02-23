@@ -139,11 +139,13 @@ export async function handleHttpApiRequest({
 
   const { auth, main, httpMethod: declaredMethod } = apisObject[resolvedName];
   const inputType = apisObject[resolvedName].inputType as string | undefined;
+  const inputTypeFilePath = apisObject[resolvedName].inputTypeFilePath as string | undefined;
 
   const inputValidation = validateInputByType({
     typeText: inputType,
     value: requestData,
     rootKey: 'data',
+    filePath: inputTypeFilePath,
   });
   if (inputValidation.status === 'error') {
     return buildNetworkError({

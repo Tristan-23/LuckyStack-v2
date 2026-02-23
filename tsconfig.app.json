@@ -19,6 +19,9 @@
     "checkJs": false, /* Enable error reporting in type-checked JavaScript files. */
     "baseUrl": "./", /* Base directory to resolve non-absolute module names. */
     "paths": {
+      "@/*": [
+        "./src/*"
+      ],
       "src/*": [
         "src/*"
       ],

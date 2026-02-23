@@ -1,3 +1,9 @@
+import {
+  getUnresolvedTypeMessage,
+  isUnresolvedTypeMarker,
+  resolveRuntimeTypeText,
+} from './runtimeTypeResolver';
+
 type ValidationResult =
   | { status: 'success' }
   | { status: 'error'; message: string };
@@ -79,8 +85,16 @@ const isPrimitiveMatch = (type: string, value: unknown): boolean => {
   return false;
 };
 
+const isPrimitiveType = (type: string): boolean => {
+  return ['string', 'number', 'boolean', 'null', 'undefined', 'Date'].includes(type);
+};
+
 const validateType = (typeText: string, value: unknown, path: string): ValidationResult => {
   const type = typeText.trim();
+
+  if (isUnresolvedTypeMarker(type)) {
+    return { status: 'error', message: `${path}: ${getUnresolvedTypeMessage(type)}` };
+  }
 
   if (type.startsWith('(') && type.endsWith(')')) {
     return validateType(type.slice(1, -1), value, path);
@@ -134,6 +148,11 @@ const validateType = (typeText: string, value: unknown, path: string): Validatio
     return { status: 'success' };
   }
 
+  if (isPrimitiveType(type)) {
+    const expectedType = type === 'Date' ? 'Date (ISO string or Date)' : type;
+    return { status: 'error', message: `${path} should be ${expectedType}` };
+  }
+
   if (type === 'any' || type === 'unknown') {
     return { status: 'success' };
   }
@@ -175,7 +194,11 @@ const validateType = (typeText: string, value: unknown, path: string): Validatio
   }
 
   if (/^[A-Za-z_][A-Za-z0-9_]*(?:<.+>)?$/.test(type)) {
-    return { status: 'error', message: `${path} uses unresolved type ${type}` };
+    if (/^[A-Za-z_][A-Za-z0-9_]*<.+>$/.test(type)) {
+      return { status: 'error', message: `${path}: unresolved utility ${type}` };
+    }
+
+    return { status: 'error', message: `${path}: unresolved type ${type}` };
   }
 
   return { status: 'success' };
@@ -185,14 +208,21 @@ export const validateInputByType = ({
   typeText,
   value,
   rootKey,
+  filePath,
 }: {
   typeText?: string;
   value: unknown;
   rootKey: string;
+  filePath?: string;
 }): ValidationResult => {
   if (!typeText || typeText.trim() === '' || typeText.trim() === 'any') {
     return { status: 'success' };
   }
 
-  return validateType(typeText, value, rootKey);
+  const resolvedType = resolveRuntimeTypeText({ typeText, filePath });
+  if (resolvedType.status === 'error') {
+    return { status: 'error', message: `${rootKey}: ${resolvedType.message}` };
+  }
+
+  return validateType(resolvedType.typeText, value, rootKey);
 };

@@ -59,14 +59,14 @@ export default function Dropdown({
         bg-container1 border border-container1-border transition-colors hover:bg-container1-hover
         ${className}
       `}
+      onClick={() => {
+        setIsOpen((prev) => !prev);
+      }}
     >
       {/* Current Selection / Title */}
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3"
-        onClick={() => {
-          setIsOpen((prev) => !prev);
-        }}
       >
         <span className={`text-sm ${isValueSelected ? "text-title font-medium" : "text-common"}`}>
           {currentLabel}

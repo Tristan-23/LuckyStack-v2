@@ -1,4 +1,5 @@
 import path from 'path';
+import { GENERATED_SOCKET_TYPES_PATH } from '../../utils/paths';
 
 export interface FileImport {
   source: string;
@@ -14,7 +15,7 @@ export interface ImportCollectors {
 const toGeneratedImportPath = (source: string, filePath: string): string => {
   if (!source.startsWith('.')) return source;
 
-  const outputDir = path.join(process.cwd(), 'src', '_sockets');
+  const outputDir = path.dirname(GENERATED_SOCKET_TYPES_PATH);
   const absoluteSource = path.resolve(path.dirname(filePath), source);
   let relPath = path.relative(outputDir, absoluteSource).replace(/\\/g, '/');
   relPath = relPath.replace(/\.tsx?$/, '');
@@ -105,7 +106,7 @@ export const sanitizeTypeAndCollectImports = ({
     }
 
     if (availableExports.has(typeName)) {
-      const outputDir = path.join(process.cwd(), 'src', '_sockets');
+      const outputDir = path.dirname(GENERATED_SOCKET_TYPES_PATH);
       let relPath = path.relative(outputDir, filePath).replace(/\\/g, '/').replace('.ts', '');
       if (!relPath.startsWith('.')) relPath = `./${relPath}`;
       if (!namedImports.has(relPath)) namedImports.set(relPath, new Set());

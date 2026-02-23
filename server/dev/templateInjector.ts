@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GENERATED_SOCKET_TYPES_PATH } from '../utils/paths';
 
 /**
  * Template Injector
@@ -152,7 +153,7 @@ export const extractClientInputFromFile = (filePath: string): string | null => {
  */
 export const extractClientInputFromGeneratedTypes = (pagePath: string, syncName: string): string | null => {
   try {
-    const generatedTypesPath = path.join(process.cwd(), 'src', '_sockets', 'apiTypes.generated.ts');
+    const generatedTypesPath = GENERATED_SOCKET_TYPES_PATH;
     const content = fs.readFileSync(generatedTypesPath, 'utf-8');
 
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

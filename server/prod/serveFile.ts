@@ -2,6 +2,7 @@ import fs from "fs";
 import { IncomingMessage, ServerResponse } from "http";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { PUBLIC_DIR } from '../utils/paths';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,7 @@ const resolveExistingPath = (paths: string[]): string | null => {
 export const serveFavicon = (res: ServerResponse) => {
   //? here we get the favicon.ico file from the public folder and serve it to the client
   const publicFolder = resolveExistingPath([
-    path.join(process.cwd(), 'public'),
+    PUBLIC_DIR,
     path.join(__dirname, '../public'),
     path.join(__dirname, '../../public'),
   ]);

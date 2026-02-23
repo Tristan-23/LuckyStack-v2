@@ -8,9 +8,31 @@
       "node"
     ], /* Type declaration files to be included in compilation. */
     "sourceMap": true, /* Generates corresponding '.map' file. */
-    "downlevelIteration": true /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
+    "downlevelIteration": true, /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "src/*": [
+        "src/*"
+      ],
+      "config": [
+        "./config.ts"
+      ],
+      "shared/*": [
+        "./shared/*"
+      ]
+    }
   },
   "include": [
-    "server/**/*"
+    "server/**/*",
+    "src/**/_api/**/*",
+    "src/**/_sync/**/*",
+    "src/**/_server/**/*",
+    "src/**/*_server.ts",
+    "src/**/*_server.tsx",
+    "src/**/*_server.js",
+    "src/**/*_server.jsx"
   ]
 }

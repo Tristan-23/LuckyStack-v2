@@ -3,6 +3,7 @@ import path from "path";
 import { createRequire } from 'module';
 import tryCatch from "../functions/tryCatch";
 import { getInputTypeFromFile, getSyncClientDataType } from './typeMap/extractors';
+import { SERVER_FUNCTIONS_DIR, SRC_DIR } from '../utils/paths';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -73,7 +74,7 @@ const resolveFunctionModule = (loadedModule: any, fileName: string) => {
 
 export const initializeApis = async () => {
   Object.keys(devApis).forEach((key) => delete devApis[key]);
-  const srcFolder = fs.readdirSync(path.resolve("./src"));
+  const srcFolder = fs.readdirSync(SRC_DIR);
 
   for (const file of srcFolder) {
     await scanApiFolder(file);
@@ -81,7 +82,7 @@ export const initializeApis = async () => {
 };
 
 const scanApiFolder = async (file: string, basePath = "") => {
-  const fullPath = path.join("./src", basePath, file);
+  const fullPath = path.join(SRC_DIR, basePath, file);
   if (!fs.statSync(fullPath).isDirectory()) return;
 
   if (!file.toLowerCase().endsWith("api")) {
@@ -127,13 +128,14 @@ const scanApiFolder = async (file: string, basePath = "") => {
       httpMethod,
       schema,
       inputType,
+      inputTypeFilePath: modulePath,
     };
   }
 };
 
 export const initializeSyncs = async () => {
   Object.keys(devSyncs).forEach((key) => delete devSyncs[key]);
-  const srcFolder = fs.readdirSync(path.resolve("./src"));
+  const srcFolder = fs.readdirSync(SRC_DIR);
 
   for (const file of srcFolder) {
     await scanSyncFolder(file);
@@ -141,7 +143,7 @@ export const initializeSyncs = async () => {
 };
 
 const scanSyncFolder = async (file: string, basePath = "") => {
-  const fullPath = path.join("./src", basePath, file);
+  const fullPath = path.join(SRC_DIR, basePath, file);
   if (!fs.statSync(fullPath).isDirectory()) return;
 
   if (!file.toLowerCase().endsWith("sync")) {
@@ -183,6 +185,7 @@ const scanSyncFolder = async (file: string, basePath = "") => {
         main: resolvedSyncModule.main,
         auth: resolvedSyncModule.auth || {},
         inputType,
+        inputTypeFilePath: filePath,
       };
     } else {
       devSyncs[`${routeBaseKey}_client`] = resolvedSyncModule.main;
@@ -193,7 +196,7 @@ const scanSyncFolder = async (file: string, basePath = "") => {
 export const initializeFunctions = async () => {
   Object.keys(devFunctions).forEach((key) => delete devFunctions[key]);
 
-  const serverFunctionsDir = path.resolve("./server/functions");
+  const serverFunctionsDir = SERVER_FUNCTIONS_DIR;
   if (fs.existsSync(serverFunctionsDir)) {
     await scanFunctionsFolder(serverFunctionsDir);
   }

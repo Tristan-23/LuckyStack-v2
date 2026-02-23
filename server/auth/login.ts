@@ -12,6 +12,7 @@ import config, { SessionLayout } from '../../config';
 import path from 'path';
 import { existsSync } from 'fs';
 import tryCatch from '../../shared/tryCatch';
+import { UPLOADS_DIR } from '../utils/paths';
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ type paramsType = {
   confirmPassword?: string,
 }
 
-const uploadsFolder = path.join(process.cwd(), "uploads");
+const uploadsFolder = UPLOADS_DIR;
 
 const asRecord = (value: unknown): Record<string, any> => {
   if (value && typeof value === 'object') {

@@ -2,6 +2,7 @@ import path from "path";
 import { access } from 'fs/promises';
 import fs from "fs";
 import { ServerResponse } from "http";
+import { UPLOADS_DIR } from './paths';
 
 export const serveAvatar = async ({
   routePath,
@@ -10,7 +11,7 @@ export const serveAvatar = async ({
   routePath: string;
   res: ServerResponse;
 }) => {
-  const uploadsFolder = path.join(process.cwd(), "uploads");
+  const uploadsFolder = UPLOADS_DIR;
 
   // Always append .webp since that's the stored format
   const fileId = path.basename(routePath, path.extname(routePath)); // remove any extension if present

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { GENERATED_API_DOCS_PATH, GENERATED_SOCKET_TYPES_PATH } from '../../utils/paths';
 
 export interface ApiTypeEntry {
 	input: string;
@@ -252,11 +253,11 @@ export const writeTypeMapArtifacts = ({
 	docsData: any;
 }) => {
 	try {
-		const outputPath = path.join(process.cwd(), 'src', '_sockets', 'apiTypes.generated.ts');
+		const outputPath = GENERATED_SOCKET_TYPES_PATH;
 		fs.writeFileSync(outputPath, content, 'utf-8');
 		console.log('[TypeMapGenerator] Generated apiTypes.generated.ts');
 
-		const docsPath = path.join(process.cwd(), 'src', 'docs', 'apiDocs.generated.json');
+		const docsPath = GENERATED_API_DOCS_PATH;
 		const docsDir = path.dirname(docsPath);
 		if (!fs.existsSync(docsDir)) {
 			fs.mkdirSync(docsDir, { recursive: true });

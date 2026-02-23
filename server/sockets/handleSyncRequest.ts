@@ -134,12 +134,13 @@ export default async function handleSyncRequest({ msg, socket, token }: {
 
   let serverOutput = {};
   if (syncObject[`${resolvedName}_server`]) {
-    const { auth, main: serverMain, inputType } = syncObject[`${resolvedName}_server`];
+    const { auth, main: serverMain, inputType, inputTypeFilePath } = syncObject[`${resolvedName}_server`];
 
     const inputValidation = validateInputByType({
       typeText: inputType,
       value: data,
       rootKey: 'clientInput',
+      filePath: inputTypeFilePath,
     });
     if (inputValidation.status === 'error') {
       return typeof responseIndex == 'number' && socket.emit(`sync-${responseIndex}`, buildSyncError({

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { FileImport, ImportCollectors, parseFileTypeContext, sanitizeTypeAndCollectImports } from './typeContext';
 import { stripComments } from './extractors';
+import { SERVER_FUNCTIONS_DIR } from '../../utils/paths';
 
 const extractBalancedParentheses = (content: string, startIndex: number): string | null => {
   let depth = 0;
@@ -236,6 +237,6 @@ const generateFunctionsForDir = (dir: string, collectors: ImportCollectors, inde
 };
 
 export const generateServerFunctions = (collectors: ImportCollectors): string => {
-  const functionsDir = path.join(process.cwd(), 'server', 'functions');
+  const functionsDir = SERVER_FUNCTIONS_DIR;
   return generateFunctionsForDir(functionsDir, collectors, '\t');
 };

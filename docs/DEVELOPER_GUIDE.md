@@ -95,6 +95,15 @@ luckystack/
 
 ---
 
+## Paths and Aliases
+
+- Runtime/server path constants are centralized in `server/utils/paths.ts`.
+- Use these constants for filesystem paths (uploads, public, generated files, server functions) instead of hardcoding `process.cwd()` joins.
+- Alias resolution source of truth is TypeScript config paths (`tsconfig.server.json` and `tsconfig.app.json`).
+- `vite.config.ts` uses `vite-tsconfig-paths`, and server runtime type resolution reuses those same tsconfig path mappings.
+
+---
+
 ## Common Patterns
 
 ### Page with API and Sync
