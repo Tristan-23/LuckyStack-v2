@@ -52,3 +52,32 @@ Practical recommendation
 Phase 1: AST-only parser (no checker) for imports/params/returns.
 Phase 2: add TypeChecker only for unresolved aliases/cross-file complex types.
 Phase 3: remove regex fallbacks once coverage is stable.
+
+
+
+
+
+
+
+
+We need to replace regex parsing in LuckyStack’s type generation with the TypeScript compiler API so imported types, aliases, and utilities like Omit/Partial resolve correctly. Right now, extractors.ts, typeContext.ts, functionsMeta.ts, and apiMeta.ts use regex and break on nested generics, re‑exports, mapped/conditional types, and cross‑file imports. The runtime validator also tries to resolve types with string parsing and only supports literal utility usage, so it fails on real-world Omit<T, keyof U> patterns.
+
+Key point: AST-only parsing will not fix the typing problems. It only improves syntax discovery. To resolve imported types and utilities, we must build a Program and use the TypeChecker.
+
+Phased plan:
+
+AST-only parsing for import/export discovery and function signatures (replace regex in typeContext.ts and functionsMeta.ts).
+Add TypeChecker for actual type resolution in APIs/syncs and runtime validation.
+Remove regex fallbacks once stable.
+Output strategy for generated apiTypes.generated.ts:
+
+Expanded types (no imports): use TypeChecker + type walk to emit full literal input/output shapes. This avoids duplicate import errors and fixes docs output.
+Referenced types (with imports): still possible, but must dedupe imports by canonical symbol identity to avoid “same type imported twice from different paths.”
+Docs can always be generated from expanded types even if the type map stays referenced.
+Docs page issue: if we expand types for docs output, it will show literal input/output objects instead of UserLayout names.
+
+Bottom line:
+
+Use Program + TypeChecker for real resolution.
+Optionally expand types for generated maps to avoid import collisions.
+Always expand types for docs output to show concrete shapes.

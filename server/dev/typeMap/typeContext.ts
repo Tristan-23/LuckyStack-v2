@@ -1,3 +1,4 @@
+import ts from 'typescript';
 import path from 'path';
 import { GENERATED_SOCKET_TYPES_PATH } from '../../utils/paths';
 
@@ -23,41 +24,67 @@ const toGeneratedImportPath = (source: string, filePath: string): string => {
   return relPath;
 };
 
-export const parseFileTypeContext = (content: string) => {
+// Parses a source file's AST to collect exported type names and import bindings.
+// Uses ts.createSourceFile (no TypeChecker needed) for fast structural discovery.
+export const parseFileTypeContext = (content: string): {
+  availableExports: Set<string>;
+  fileImports: Map<string, FileImport>;
+} => {
   const availableExports = new Set<string>();
   const fileImports = new Map<string, FileImport>();
 
-  const typeExportRegex = /export\s+(?:interface|type|class|enum)\s+(\w+)/g;
-  let typeExportMatch;
-  while ((typeExportMatch = typeExportRegex.exec(content)) !== null) {
-    availableExports.add(typeExportMatch[1]);
-  }
+  const sourceFile = ts.createSourceFile(
+    '__temp__.ts',
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+  );
 
-  const importRegex = /import\s+(?:type\s+)?(?:(\w+)|(?:\*\s+as\s+(\w+))|\{([^}]+)\})\s+from\s+['"]([^'"]+)['"]/g;
-  let importMatch;
-  while ((importMatch = importRegex.exec(content)) !== null) {
-    const source = importMatch[4];
-    const defaultImport = importMatch[1];
-    const namespaceImport = importMatch[2];
-    const namedImportBlock = importMatch[3];
-
-    if (defaultImport) {
-      fileImports.set(defaultImport, { source, isDefault: true });
-    } else if (namespaceImport) {
-      fileImports.set(namespaceImport, { source, isDefault: true });
+  for (const statement of sourceFile.statements) {
+    // Collect exported type/interface/class/enum declarations
+    if (
+      ts.isInterfaceDeclaration(statement)
+      || ts.isTypeAliasDeclaration(statement)
+      || ts.isClassDeclaration(statement)
+      || ts.isEnumDeclaration(statement)
+    ) {
+      const hasExport = statement.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword);
+      if (hasExport && statement.name) {
+        availableExports.add(statement.name.text);
+      }
+      continue;
     }
 
-    if (namedImportBlock) {
-      namedImportBlock.split(',').forEach(part => {
-        const [originalName, aliasName] = part.split(/\s+as\s+/).map(value => value.trim());
-        if (originalName) {
-          fileImports.set(aliasName || originalName, {
-            source,
-            isDefault: false,
-            originalName,
-          });
-        }
-      });
+    if (!ts.isImportDeclaration(statement)) continue;
+
+    const moduleSpecifier = statement.moduleSpecifier;
+    if (!ts.isStringLiteral(moduleSpecifier)) continue;
+    const source = moduleSpecifier.text;
+
+    const importClause = statement.importClause;
+    if (!importClause) continue;
+
+    // Default import: import Foo from './foo'
+    if (importClause.name) {
+      fileImports.set(importClause.name.text, { source, isDefault: true });
+    }
+
+    const namedBindings = importClause.namedBindings;
+    if (!namedBindings) continue;
+
+    // Namespace import: import * as Foo from './foo'
+    if (ts.isNamespaceImport(namedBindings)) {
+      fileImports.set(namedBindings.name.text, { source, isDefault: true });
+      continue;
+    }
+
+    // Named imports: import { Foo, Bar as Baz } from './foo'
+    if (ts.isNamedImports(namedBindings)) {
+      for (const specifier of namedBindings.elements) {
+        const localName = specifier.name.text;
+        const originalName = specifier.propertyName?.text ?? localName;
+        fileImports.set(localName, { source, isDefault: false, originalName });
+      }
     }
   }
 

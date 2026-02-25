@@ -1,27 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-import { FileImport, parseFileTypeContext, sanitizeTypeAndCollectImports } from './typeMap/typeContext';
 import { findAllApiFiles, findAllSyncClientFiles, findAllSyncServerFiles } from './typeMap/discovery';
 import { extractApiName, extractApiVersion, extractPagePath, extractSyncName, extractSyncPagePath, extractSyncVersion } from './typeMap/routeMeta';
 import { extractAuth, extractHttpMethod, extractRateLimit, HttpMethod } from './typeMap/apiMeta';
 import { buildTypeMapArtifacts, writeTypeMapArtifacts } from './typeMap/emitterArtifacts';
-import { getInputTypeFromFile, getOutputTypeFromFile, getSyncClientDataType, getSyncClientOutputType, getSyncServerOutputType, stripComments } from './typeMap/extractors';
+import { getInputTypeFromFile, getOutputTypeFromFile, getSyncClientDataType, getSyncClientOutputType, getSyncServerOutputType } from './typeMap/extractors';
 import { generateServerFunctions } from './typeMap/functionsMeta';
+import { invalidateProgramCache } from './typeMap/tsProgram';
 import { SRC_DIR } from '../utils/paths';
 
-/**
- * Frontend Type Map Generator
- * 
- * Generates a complete type map for all API endpoints, enabling
- * type-safe apiRequest calls on the frontend.
- */
-
-// Global set to collect required imports across all files
+// Collect required imports for the Functions interface only.
+// API/Sync types are now fully expanded by the TypeChecker and need no imports.
 const namedImports = new Map<string, Set<string>>();
 const defaultImports = new Map<string, string>();
 
-
 export const generateTypeMapFile = (): void => {
+  // Rebuild the TypeScript Program on each generation to pick up file changes.
+  invalidateProgramCache();
   namedImports.clear();
   defaultImports.clear();
 
@@ -40,23 +33,10 @@ export const generateTypeMapFile = (): void => {
 
     if (!pagePath || !apiName) continue;
 
-    const fileContent = stripComments(fs.readFileSync(filePath, 'utf-8'));
-    const { availableExports, fileImports } = parseFileTypeContext(fileContent);
-
-    const inputType = sanitizeTypeAndCollectImports({
-      type: getInputTypeFromFile(filePath),
-      filePath,
-      availableExports,
-      fileImports,
-      collectors: { namedImports, defaultImports },
-    });
-    const outputType = sanitizeTypeAndCollectImports({
-      type: getOutputTypeFromFile(filePath),
-      filePath,
-      availableExports,
-      fileImports,
-      collectors: { namedImports, defaultImports },
-    });
+    // TypeChecker-based extractors return fully-expanded inline types.
+    // No import collection or sanitization is needed for API types.
+    const inputType = getInputTypeFromFile(filePath);
+    const outputType = getOutputTypeFromFile(filePath);
     const httpMethod = extractHttpMethod(filePath, apiName);
     const rateLimit = extractRateLimit(filePath);
     const auth = extractAuth(filePath);
@@ -111,58 +91,15 @@ export const generateTypeMapFile = (): void => {
 
   for (const [, { pagePath, syncName, serverFile, clientFile }] of allSyncs) {
     const syncVersion = extractSyncVersion(serverFile || clientFile || '');
-    let availableExports = new Set<string>();
-    let fileImports = new Map<string, FileImport>();
 
-    if (serverFile) {
-      const serverContent = stripComments(fs.readFileSync(serverFile, 'utf-8'));
-      ({ availableExports, fileImports } = parseFileTypeContext(serverContent));
-    } else if (clientFile) {
-      const clientContent = stripComments(fs.readFileSync(clientFile, 'utf-8'));
-      ({ availableExports, fileImports } = parseFileTypeContext(clientContent));
-    }
+    const clientInputType = serverFile
+      ? getSyncClientDataType(serverFile)
+      : clientFile
+        ? getSyncClientDataType(clientFile)
+        : '{ }';
 
-    let clientInputType = '{ }';
-    if (serverFile) {
-      clientInputType = getSyncClientDataType(serverFile);
-    } else if (clientFile) {
-      clientInputType = getSyncClientDataType(clientFile);
-    }
-    clientInputType = sanitizeTypeAndCollectImports({
-      type: clientInputType,
-      filePath: serverFile || clientFile || '',
-      availableExports,
-      fileImports,
-      collectors: { namedImports, defaultImports },
-    });
-
-    let serverOutputType = '{ }';
-    if (serverFile) {
-      serverOutputType = getSyncServerOutputType(serverFile);
-      const serverCtxContent = stripComments(fs.readFileSync(serverFile, 'utf-8'));
-      const serverCtx = parseFileTypeContext(serverCtxContent);
-      serverOutputType = sanitizeTypeAndCollectImports({
-        type: serverOutputType,
-        filePath: serverFile,
-        availableExports: serverCtx.availableExports,
-        fileImports: serverCtx.fileImports,
-        collectors: { namedImports, defaultImports },
-      });
-    }
-
-    let clientOutputType = '{ }';
-    if (clientFile) {
-      clientOutputType = getSyncClientOutputType(clientFile);
-      const clientCtxContent = stripComments(fs.readFileSync(clientFile, 'utf-8'));
-      const clientCtx = parseFileTypeContext(clientCtxContent);
-      clientOutputType = sanitizeTypeAndCollectImports({
-        type: clientOutputType,
-        filePath: clientFile,
-        availableExports: clientCtx.availableExports,
-        fileImports: clientCtx.fileImports,
-        collectors: { namedImports, defaultImports },
-      });
-    }
+    const serverOutputType = serverFile ? getSyncServerOutputType(serverFile) : '{ }';
+    const clientOutputType = clientFile ? getSyncClientOutputType(clientFile) : '{ }';
 
     console.log(`[TypeMapGenerator] Sync: ${pagePath}/${syncName}/${syncVersion} (server: ${!!serverFile}, client: ${!!clientFile})`);
 
