@@ -119,8 +119,6 @@ export const expandType = (type: ts.Type, checker: ts.TypeChecker, depth = 0): s
 
       // Known opaque containers — return as-is without expanding internals
       if (SKIP_EXPANSION.has(targetName)) {
-        // Special-case: always serialize Date as string
-        if (targetName === 'Date') return 'string';
         return checker.typeToString(type);
       }
     }
@@ -128,7 +126,6 @@ export const expandType = (type: ts.Type, checker: ts.TypeChecker, depth = 0): s
     // Known non-generic opaque containers (Date, Error, Buffer, etc.)
     const symbolName = type.symbol?.name || type.aliasSymbol?.name || '';
     if (SKIP_EXPANSION.has(symbolName)) {
-      if (symbolName === 'Date') return 'string';
       return checker.typeToString(type);
     }
 
