@@ -1,3 +1,5 @@
+import { user } from '@prisma/client';
+
 // ============================================
 // LUCKYSTACK CONFIGURATION
 // ============================================
@@ -120,18 +122,7 @@ const config = {
  * Session data structure stored in Redis.
  * Extend this interface to add custom fields to user sessions.
  */
-export interface SessionLayout {
-  id: string;
-  name: string;
-  email: string;
-  provider: string;
-  admin: boolean;
-  avatar: string;
-  avatarFallback: string;
-  language: string;
-  theme: 'light' | 'dark';
-  createdAt: Date;
-  updatedAt: Date;
+export interface SessionLayout extends user {
   token: string;
   roomCodes?: string[]; // Room codes the user has joined
   location?: {
