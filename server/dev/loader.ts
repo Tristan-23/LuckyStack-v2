@@ -115,7 +115,10 @@ const scanApiFolder = async (file: string, basePath = "") => {
 
     const modulePath = path.resolve(path.join(fullPath, relFile));
     const [err, module] = await tryCatch(async () => importFile(modulePath));
-    if (err) continue;
+    if (err) {
+      console.log(`[loader][api] failed to import ${routeKey} from ${modulePath}:`, err, 'red');
+      continue;
+    }
 
     const resolvedModule = module?.default ? { ...module.default, ...module } : module;
     const { auth = {}, main, rateLimit, httpMethod, schema } = resolvedModule;
@@ -179,7 +182,10 @@ const scanSyncFolder = async (file: string, basePath = "") => {
 
     const filePath = path.resolve(path.join(fullPath, relFile));
     const [fileError, fileResult] = await tryCatch(async () => importFile(filePath));
-    if (fileError) continue;
+    if (fileError) {
+      console.log(`[loader][sync] failed to import ${filePath}:`, fileError, 'red');
+      continue;
+    }
 
     const resolvedSyncModule = fileResult?.default
       ? { ...fileResult.default, ...fileResult }
@@ -225,7 +231,10 @@ const scanFunctionsFolder = async (dir: string, basePath: string[] = []) => {
     }
 
     const [err, module] = await tryCatch(async () => importFile(fullPath));
-    if (err) continue;
+    if (err) {
+      console.log(`[loader][function] failed to import ${fullPath}:`, err, 'red');
+      continue;
+    }
 
     const fileName = entry.replace(".ts", "");
     const resolvedFunctionModule = resolveFunctionModule(module, fileName);
