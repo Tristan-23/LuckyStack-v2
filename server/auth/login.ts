@@ -80,6 +80,7 @@ const loginWithCredentials = async (params: paramsType) => {
           name: name,
           password: hashedPassword,
           avatar: '',
+          avatarFallback: `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
           admin: false,
           language: config.defaultLanguage
         }
@@ -123,20 +124,25 @@ const loginWithCredentials = async (params: paramsType) => {
     //? if the password matches we return the user
     if (checkPasswordResponse) {
       const newToken = randomBytes(32).toString("hex")
+      // const newUser = {
+      //   id: findUserResponse.id,
+      //   name: findUserResponse.name,
+      //   provider: 'credentials',
+      //   email: findUserResponse.email,
+      //   createdAt: findUserResponse.createdAt,
+      //   updatedAt: findUserResponse.updatedAt,
+      //   token: newToken,
+      //   avatar: findUserResponse.avatar || '',
+      //   avatarFallback: `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
+      //   admin: findUserResponse.admin,
+      //   language: findUserResponse.language,
+      //   theme: findUserResponse.theme
+      // };
       const newUser = {
-        id: findUserResponse.id,
-        name: findUserResponse.name,
-        provider: 'credentials',
-        email: findUserResponse.email,
-        createdAt: findUserResponse.createdAt,
-        updatedAt: findUserResponse.updatedAt,
+        ...findUserResponse,
         token: newToken,
-        avatar: findUserResponse.avatar || '',
-        avatarFallback: `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
-        admin: findUserResponse.admin,
-        language: findUserResponse.language,
-        theme: findUserResponse.theme
-      };
+      }
+          
 
       const filePath = path.join(uploadsFolder, `${newUser.id}.webp`);
       if (existsSync(filePath)) {
@@ -257,20 +263,6 @@ const loginCallback = async (pathname: string, req: IncomingMessage, _res: Serve
     provider?.avatarKey ? String(userData[provider.avatarKey] || '') :
       provider.getAvatar ? provider.getAvatar({ userData, avatarId: typeof avatarId === 'string' ? avatarId : '' }) : '';
 
-  console.log(avatar)
-  // const user = {
-  //   id: '',
-  //   name,
-  //   provider: provider.name,
-  //   email,
-  //   createdAt: new Date(),
-  //   updatedAt: new Date(),
-  //   token: '',
-  //   avatar,
-  //   admin: false,
-  //   language: config.defaultLanguage
-  // }
-
   //? if we didnt find the email we try to get it with a external link if this one is provided
   if (!email && provider.getEmail) {
     const selectedEmail = await provider.getEmail(access_token);
@@ -304,16 +296,14 @@ const loginCallback = async (pathname: string, req: IncomingMessage, _res: Serve
     console.log('ASDSADASDDASDA')
     //? if the user exists we assign it to the tempUser variable
     if (userDataResponse?.id) {
-      const { password, ...safeData } = userDataResponse;
-      const filePath = path.join(uploadsFolder, `${safeData.id}.webp`);
+      // const { password, ...safeData } = userDataResponse;
+      const filePath = path.join(uploadsFolder, `${userDataResponse.id}.webp`);
       if (existsSync(filePath)) {
-        safeData.avatar = `${safeData.id}.webp`;
+        userDataResponse.avatar = `${userDataResponse.id}.webp`;
       }
 
       tempUser = {
-        ...safeData,
-        avatarFallback:
-          `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
+        ...userDataResponse,
         token: ''
       };
     }
@@ -328,6 +318,7 @@ const loginCallback = async (pathname: string, req: IncomingMessage, _res: Serve
             provider: provider.name as PROVIDERS,
             name,
             avatar,
+            avatarFallback: `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
             language: config.defaultLanguage
           }
         })
@@ -339,10 +330,8 @@ const loginCallback = async (pathname: string, req: IncomingMessage, _res: Serve
       }
 
       if (createNewUserResponse) {
-        const { password, ...safeData } = createNewUserResponse;
         tempUser = {
-          ...safeData,
-          avatarFallback: `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`,
+          ...createNewUserResponse,
           token: ''
         };
       }
